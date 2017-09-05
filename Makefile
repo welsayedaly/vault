@@ -24,7 +24,12 @@ dev-dynamic: prep
 
 # test runs the unit tests and vets the code
 test: fmtcheck prep
-	CGO_ENABLED=0 VAULT_TOKEN= VAULT_ACC= go test -tags='$(BUILD_TAGS)' $(TEST) $(TESTARGS) -timeout=20m -parallel=4
+	@CGO_ENABLED=0 \
+	VAULT_ADDR= \
+	VAULT_TOKEN= \
+	VAULT_DEV_ROOT_TOKEN_ID= \
+	VAULT_ACC= \
+	go test -tags='$(BUILD_TAGS)' $(TEST) $(TESTARGS) -timeout=20m -parallel=20
 
 testcompile: fmtcheck prep
 	@for pkg in $(TEST) ; do \
@@ -41,7 +46,12 @@ testacc: fmtcheck prep
 
 # testrace runs the race checker
 testrace: fmtcheck prep
-	CGO_ENABLED=1 VAULT_TOKEN= VAULT_ACC= go test -tags='$(BUILD_TAGS)' -race $(TEST) $(TESTARGS) -timeout=45m -parallel=4
+	@CGO_ENABLED=1 \
+	VAULT_ADDR= \
+	VAULT_TOKEN= \
+	VAULT_DEV_ROOT_TOKEN_ID= \
+	VAULT_ACC= \
+	go test -tags='$(BUILD_TAGS)' -race $(TEST) $(TESTARGS) -timeout=45m -parallel=20
 
 cover:
 	./scripts/coverage.sh --html
@@ -60,8 +70,8 @@ vet:
 # prep runs `go generate` to build the dynamically generated
 # source files.
 prep:
-	go generate $(go list ./... | grep -v /vendor/)
-	cp .hooks/* .git/hooks/
+	@go generate $(go list ./... | grep -v /vendor/)
+	@cp .hooks/* .git/hooks/
 
 # bootstrap the build by downloading additional tools
 bootstrap:
