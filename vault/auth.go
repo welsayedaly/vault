@@ -113,7 +113,7 @@ func (c *Core) enableCredential(entry *MountEntry) error {
 	// Check for the correct backend type
 	backendType := backend.Type()
 	if entry.Type == "plugin" && backendType != logical.TypeCredential {
-		return fmt.Errorf("cannot mount '%s' of type '%s' as an auth backend", entry.Config.PluginName, backendType)
+		return fmt.Errorf("cannot mount '%s' of type '%s' as an auth method", entry.Config.PluginName, backendType)
 	}
 
 	if err := backend.Initialize(); err != nil {
@@ -440,7 +440,7 @@ func (c *Core) setupCredentials() error {
 
 		// Check for the correct backend type
 		if entry.Type == "plugin" && backend.Type() != logical.TypeCredential {
-			return fmt.Errorf("cannot mount '%s' of type '%s' as an auth backend", entry.Config.PluginName, backend.Type())
+			return fmt.Errorf("cannot mount '%s' of type '%s' as an auth method", entry.Config.PluginName, backend.Type())
 		}
 
 		if err := backend.Initialize(); err != nil {

@@ -1466,7 +1466,7 @@ func (b *SystemBackend) handleMountTuneRead(
 			logical.ErrInvalidRequest
 	}
 
-	// This call will read both logical backend's configuration as well as auth backends'.
+	// This call will read both logical backend's configuration as well as auth methods'.
 	// Retaining this behavior for backward compatibility. If this behavior is not desired,
 	// an error can be returned if path has a prefix of "auth/".
 	return b.handleTuneReadCommon(path)
@@ -1518,7 +1518,7 @@ func (b *SystemBackend) handleMountTuneWrite(
 		return logical.ErrorResponse("path must be specified as a string"),
 			logical.ErrInvalidRequest
 	}
-	// This call will write both logical backend's configuration as well as auth backends'.
+	// This call will write both logical backend's configuration as well as auth methods'.
 	// Retaining this behavior for backward compatibility. If this behavior is not desired,
 	// an error can be returned if path has a prefix of "auth/".
 	return b.handleTuneWriteCommon(path, data)
@@ -2639,7 +2639,7 @@ and is unaffected by replication.`,
 	},
 
 	"mount_plugin_name": {
-		`Name of the plugin to mount based from the name registered 
+		`Name of the plugin to mount based from the name registered
 in the plugin catalog.`,
 	},
 
@@ -2748,10 +2748,10 @@ This path responds to the following HTTP methods.
         credential backend.
 
     POST /<mount point>
-        Enable a new auth backend.
+        Enable a new auth method.
 
     DELETE /<mount point>
-        Disable the auth backend at the given mount point.
+        Disable the auth method at the given mount point.
 		`,
 	},
 
@@ -2989,7 +2989,7 @@ This path responds to the following HTTP methods.
 		"",
 	},
 	"plugin-catalog_sha-256": {
-		`The SHA256 sum of the executable used in the 
+		`The SHA256 sum of the executable used in the
 command field. This should be HEX encoded.`,
 		"",
 	},
