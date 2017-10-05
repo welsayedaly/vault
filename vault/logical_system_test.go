@@ -241,7 +241,11 @@ func TestSystemBackend_Capabilities(t *testing.T) {
 func testCapabilities(t *testing.T, endpoint string) {
 	core, b, rootToken := testCoreSystemBackend(t)
 	req := logical.TestRequest(t, logical.UpdateOperation, endpoint)
-	req.Data["token"] = rootToken
+	if endpoint == "capabilities-self" {
+		req.ClientToken = rootToken
+	} else {
+		req.Data["token"] = rootToken
+	}
 	req.Data["path"] = "any_path"
 
 	resp, err := b.HandleRequest(req)
@@ -266,7 +270,11 @@ func testCapabilities(t *testing.T, endpoint string) {
 
 	testMakeToken(t, core.tokenStore, rootToken, "tokenid", "", []string{"test"})
 	req = logical.TestRequest(t, logical.UpdateOperation, endpoint)
-	req.Data["token"] = "tokenid"
+	if endpoint == "capabilities-self" {
+		req.ClientToken = "tokenid"
+	} else {
+		req.Data["token"] = "tokenid"
+	}
 	req.Data["path"] = "foo/bar"
 
 	resp, err = b.HandleRequest(req)
