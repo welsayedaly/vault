@@ -50,6 +50,7 @@ func NewIdentityStore(core *Core, config *logical.BackendConfig) (*IdentityStore
 		Paths: framework.PathAppend(
 			entityPaths(iStore),
 			aliasPaths(iStore),
+			groupAliasPaths(iStore),
 			groupPaths(iStore),
 			lookupPaths(iStore),
 			upgradePaths(iStore),
@@ -232,9 +233,9 @@ func (i *IdentityStore) parseGroupFromBucketItem(item *storagepacker.Item) (*ide
 	return &group, nil
 }
 
-// EntityByAliasFactors fetches the entity based on factors of alias, i.e mount
+// entityByAliasFactors fetches the entity based on factors of alias, i.e mount
 // accessor and the alias name.
-func (i *IdentityStore) EntityByAliasFactors(mountAccessor, aliasName string, clone bool) (*identity.Entity, error) {
+func (i *IdentityStore) entityByAliasFactors(mountAccessor, aliasName string, clone bool) (*identity.Entity, error) {
 	if mountAccessor == "" {
 		return nil, fmt.Errorf("missing mount accessor")
 	}
@@ -243,7 +244,7 @@ func (i *IdentityStore) EntityByAliasFactors(mountAccessor, aliasName string, cl
 		return nil, fmt.Errorf("missing alias name")
 	}
 
-	alias, err := i.memDBAliasByFactors(mountAccessor, aliasName, false)
+	alias, err := i.memDBAliasByFactors(mountAccessor, aliasName, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +257,7 @@ func (i *IdentityStore) EntityByAliasFactors(mountAccessor, aliasName string, cl
 }
 
 // CreateEntity creates a new entity. This is used by core to
-// associate each login attempt by a alias to a unified entity in Vault.
+// associate each login attempt by an alias to a unified entity in Vault.
 func (i *IdentityStore) CreateEntity(alias *logical.Alias) (*identity.Entity, error) {
 	var entity *identity.Entity
 	var err error
@@ -279,7 +280,7 @@ func (i *IdentityStore) CreateEntity(alias *logical.Alias) (*identity.Entity, er
 	}
 
 	// Check if an entity already exists for the given alais
-	entity, err = i.EntityByAliasFactors(alias.MountAccessor, alias.Name, false)
+	entity, err = i.entityByAliasFactors(alias.MountAccessor, alias.Name, false)
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +297,7 @@ func (i *IdentityStore) CreateEntity(alias *logical.Alias) (*identity.Entity, er
 
 	// Create a new alias
 	newAlias := &identity.Alias{
-		EntityID:      entity.ID,
+		ParentID:      entity.ID,
 		Name:          alias.Name,
 		MountAccessor: alias.MountAccessor,
 		MountPath:     mountValidationResp.MountPath,

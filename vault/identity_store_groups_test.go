@@ -109,7 +109,7 @@ func TestIdentityStore_MemDBGroupIndexes(t *testing.T) {
 	}
 
 	// Fetch groups based on member entity ID
-	fetchedGroups, err = i.memDBGroupsByMemberEntityID("testentityid1", false)
+	fetchedGroups, err = i.memDBGroupsByMemberEntityID("testentityid1", false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func TestIdentityStore_MemDBGroupIndexes(t *testing.T) {
 		t.Fatalf("failed to fetch an indexed group")
 	}
 
-	fetchedGroups, err = i.memDBGroupsByMemberEntityID("testentityid2", false)
+	fetchedGroups, err = i.memDBGroupsByMemberEntityID("testentityid2", false, false)
 	if err != nil {
 		t.Fatal(err)
 	}

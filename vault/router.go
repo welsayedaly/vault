@@ -436,9 +436,13 @@ func (r *Router) routeCommon(req *logical.Request, existenceCheck bool) (*logica
 	} else {
 		resp, err := re.backend.HandleRequest(req)
 		if resp != nil &&
-			resp.Auth != nil &&
-			resp.Auth.Alias != nil {
-			resp.Auth.Alias.MountAccessor = re.mountEntry.Accessor
+			resp.Auth != nil {
+			if resp.Auth.Alias != nil {
+				resp.Auth.Alias.MountAccessor = re.mountEntry.Accessor
+			}
+			for _, alias := range resp.Auth.GroupAliases {
+				alias.MountAccessor = re.mountEntry.Accessor
+			}
 		}
 		return resp, false, false, err
 	}

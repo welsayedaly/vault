@@ -72,7 +72,7 @@ func TestIdentityStore_CloneImmutability(t *testing.T) {
 	alias := &identity.Alias{
 		ID:                  "testaliasid",
 		Name:                "testaliasname",
-		MergedFromEntityIDs: []string{"entityid1"},
+		MergedFromParentIDs: []string{"entityid1"},
 	}
 
 	entity := &identity.Entity{
@@ -100,9 +100,9 @@ func TestIdentityStore_CloneImmutability(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	alias.MergedFromEntityIDs[0] = "invalidid"
+	alias.MergedFromParentIDs[0] = "invalidid"
 
-	if clonedAlias.MergedFromEntityIDs[0] == "invalidid" {
+	if clonedAlias.MergedFromParentIDs[0] == "invalidid" {
 		t.Fatalf("cloned alias is mutated")
 	}
 }
@@ -117,7 +117,7 @@ func TestIdentityStore_MemDBImmutability(t *testing.T) {
 	}
 
 	alias1 := &identity.Alias{
-		EntityID:      "testentityid",
+		ParentID:      "testentityid",
 		ID:            "testaliasid",
 		MountAccessor: githubAccessor,
 		MountType:     validateMountResp.MountType,
@@ -360,7 +360,7 @@ func TestIdentityStore_MemDBEntityIndexes(t *testing.T) {
 	}
 
 	alias1 := &identity.Alias{
-		EntityID:      "testentityid",
+		ParentID:      "testentityid",
 		ID:            "testaliasid",
 		MountAccessor: githubAccessor,
 		MountType:     validateMountResp.MountType,
@@ -372,7 +372,7 @@ func TestIdentityStore_MemDBEntityIndexes(t *testing.T) {
 	}
 
 	alias2 := &identity.Alias{
-		EntityID:      "testentityid",
+		ParentID:      "testentityid",
 		ID:            "testaliasid2",
 		MountAccessor: validateMountResp.MountAccessor,
 		MountType:     validateMountResp.MountType,
@@ -772,7 +772,7 @@ func TestIdentityStore_MergeEntitiesByID(t *testing.T) {
 
 	for _, aliasRaw := range entity2Aliases {
 		alias := aliasRaw.(map[string]interface{})
-		aliasLookedUp, err := is.memDBAliasByID(alias["id"].(string), false)
+		aliasLookedUp, err := is.memDBAliasByID(alias["id"].(string), false, false)
 		if err != nil {
 			t.Fatal(err)
 		}

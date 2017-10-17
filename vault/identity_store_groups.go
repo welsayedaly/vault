@@ -11,6 +11,11 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 )
 
+const (
+	groupTypeInternal = "internal"
+	groupTypeExternal = "external"
+)
+
 func groupPaths(i *IdentityStore) []*framework.Path {
 	return []*framework.Path{
 		{
@@ -19,6 +24,10 @@ func groupPaths(i *IdentityStore) []*framework.Path {
 				"id": {
 					Type:        framework.TypeString,
 					Description: "ID of the group.",
+				},
+				"type": {
+					Type:        framework.TypeString,
+					Description: "Type of the group, 'internal' or 'external'. Defaults to 'internal'",
 				},
 				"name": {
 					Type:        framework.TypeString,
@@ -54,6 +63,11 @@ func groupPaths(i *IdentityStore) []*framework.Path {
 				"id": {
 					Type:        framework.TypeString,
 					Description: "ID of the group.",
+				},
+				"type": {
+					Type:        framework.TypeString,
+					Default:     groupTypeInternal,
+					Description: "Type of the group, 'internal' or 'external'. Defaults to 'internal'",
 				},
 				"name": {
 					Type:        framework.TypeString,
@@ -143,6 +157,25 @@ func (i *IdentityStore) handleGroupUpdateCommon(req *logical.Request, d *framewo
 		group.Policies = policiesRaw.([]string)
 	}
 
+	groupTypeRaw, ok := d.GetOk("type")
+	if ok {
+		groupType := groupTypeRaw.(string)
+		if group.Type != "" && groupType != group.Type {
+			return logical.ErrorResponse(fmt.Sprintf("group type cannot be changed")), nil
+		}
+
+		group.Type = groupType
+	}
+
+	// If group type is not set, default to internal type
+	if group.Type == "" {
+		group.Type = groupTypeInternal
+	}
+
+	if group.Type != groupTypeInternal && group.Type != groupTypeExternal {
+		return logical.ErrorResponse(fmt.Sprintf("invalid group type %q", group.Type)), nil
+	}
+
 	// Get the name
 	groupName := d.Get("name").(string)
 	if groupName != "" {
@@ -173,6 +206,9 @@ func (i *IdentityStore) handleGroupUpdateCommon(req *logical.Request, d *framewo
 
 	memberEntityIDsRaw, ok := d.GetOk("member_entity_ids")
 	if ok {
+		if group.Type == groupTypeExternal {
+			return logical.ErrorResponse("member entities can't be set manually for external groups"), nil
+		}
 		group.MemberEntityIDs = memberEntityIDsRaw.([]string)
 		if len(group.MemberEntityIDs) > 512 {
 			return logical.ErrorResponse("member entity IDs exceeding the limit of 512"), nil
@@ -182,6 +218,9 @@ func (i *IdentityStore) handleGroupUpdateCommon(req *logical.Request, d *framewo
 	memberGroupIDsRaw, ok := d.GetOk("member_group_ids")
 	var memberGroupIDs []string
 	if ok {
+		if group.Type == groupTypeExternal {
+			return logical.ErrorResponse("member groups can't be set for external groups"), nil
+		}
 		memberGroupIDs = memberGroupIDsRaw.([]string)
 	}
 
@@ -209,16 +248,13 @@ func (i *IdentityStore) pathGroupIDRead(req *logical.Request, d *framework.Field
 	if err != nil {
 		return nil, err
 	}
-	if group == nil {
-		return nil, nil
-	}
 
 	return i.handleGroupReadCommon(group)
 }
 
 func (i *IdentityStore) handleGroupReadCommon(group *identity.Group) (*logical.Response, error) {
 	if group == nil {
-		return nil, fmt.Errorf("nil group")
+		return nil, nil
 	}
 
 	respData := map[string]interface{}{}
@@ -230,6 +266,7 @@ func (i *IdentityStore) handleGroupReadCommon(group *identity.Group) (*logical.R
 	respData["creation_time"] = ptypes.TimestampString(group.CreationTime)
 	respData["last_update_time"] = ptypes.TimestampString(group.LastUpdateTime)
 	respData["modify_index"] = group.ModifyIndex
+	respData["type"] = group.Type
 
 	memberGroupIDs, err := i.memberGroupIDsByID(group.ID)
 	if err != nil {
